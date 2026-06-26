@@ -1,0 +1,11 @@
+.env
+.env*.local
+.next
+node_modules
+coverage
+dist
+tsconfig.tsbuildinfo
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
