@@ -35,6 +35,33 @@ Open `http://localhost:3000`.
 
 The app runs without external analytics credentials. To enable real Mixpanel and Hotjar tracking, copy `.env.example` to `.env`, fill the analytics values, and restart the dev server.
 
+## Vercel Deployment
+
+Do not deploy this app with the local SQLite URL (`file:./dev.db`). Vercel deployments need a hosted database because local SQLite files are not a reliable persistent runtime database in serverless deployments.
+
+1. Create a hosted PostgreSQL database.
+2. Add these variables in Vercel Project Settings -> Environment Variables:
+
+```bash
+DATABASE_URL="postgresql://..."
+SESSION_SECRET="a-long-random-production-secret"
+MIXPANEL_PROJECT_TOKEN=""
+NEXT_PUBLIC_HOTJAR_SITE_ID=""
+NEXT_PUBLIC_HOTJAR_VERSION="6"
+NEXT_PUBLIC_CONTENTSQUARE_TAG_URL=""
+```
+
+3. Redeploy. The build script runs `prisma db push` when `DATABASE_URL` is PostgreSQL, so the production tables are prepared before `next build`.
+4. Register a new user on the deployed app, or seed demo accounts only for a disposable demo database. To seed the deployed database, run this with the production PostgreSQL `DATABASE_URL` loaded in your shell instead of the local SQLite URL:
+
+```bash
+npm run db:seed
+```
+
+`npm run db:seed` deletes existing users, projects, tasks, subscriptions, and analytics events before creating demo data.
+
+If Vercel shows an `Application error` with a digest after login, open the Vercel deployment logs and look for the matching digest. The usual causes are a missing `DATABASE_URL`, using the local SQLite URL in production, or deploying before the database schema exists.
+
 ## Demo Accounts
 
 | Role | Email | Password |
