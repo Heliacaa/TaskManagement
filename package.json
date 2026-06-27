@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:push": "prisma generate && node prisma/setup.mjs",
@@ -13,8 +14,10 @@
     "db:reset": "prisma generate && node prisma/setup.mjs --reset && node prisma/seed.mjs"
   },
   "dependencies": {
+    "@hotjar/browser": "^1.0.9",
     "@prisma/client": "6.19.3",
     "lucide-react": "0.468.0",
+    "mixpanel": "^0.22.0",
     "next": "15.5.19",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -28,7 +31,8 @@
     "postcss": "8.5.10",
     "prisma": "6.19.3",
     "tailwindcss": "3.4.17",
-    "typescript": "5.7.2"
+    "typescript": "5.7.2",
+    "vitest": "^3.2.6"
   },
   "overrides": {
     "postcss": "8.5.10"

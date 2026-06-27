@@ -1,6 +1,6 @@
 # TaskFlow SaaS MVP
 
-TaskFlow is a portfolio-ready SaaS task manager inspired by Trello and Asana. It includes authentication, projects, kanban tasks, a mocked Premium plan, and a local analytics dashboard that tells a Looker/Mixpanel/Hotjar-style product story without external accounts.
+TaskFlow is a portfolio-ready SaaS task manager inspired by Trello and Asana. It includes authentication, projects, kanban tasks, a mocked Premium plan, a local analytics dashboard, and optional real Mixpanel + Hotjar integrations.
 
 ## Features
 
@@ -10,6 +10,7 @@ TaskFlow is a portfolio-ready SaaS task manager inspired by Trello and Asana. It
 - Mock Premium upgrade and cancellation flow
 - Premium unlocks unlimited projects and dark mode
 - Local analytics events for signup, activation, pricing attention, upgrades, and churn
+- Optional Mixpanel event forwarding and Hotjar browser tracking through environment variables
 - Admin dashboard with active users, MRR, churn, funnel conversion, pricing attention, and recent events
 - Seeded SQLite demo data for a useful first run
 
@@ -32,6 +33,8 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+The app runs without external analytics credentials. To enable real Mixpanel and Hotjar tracking, copy `.env.example` to `.env`, fill the analytics values, and restart the dev server.
+
 ## Demo Accounts
 
 | Role | Email | Password |
@@ -43,7 +46,7 @@ Open `http://localhost:3000`.
 
 ## Product Analytics Story
 
-This project does not require paid Looker, Mixpanel, or Hotjar accounts. Instead, it implements the same product analytics concepts locally so the full flow is reviewable from GitHub.
+This project works out of the box with local SQLite analytics. When credentials are configured, the same product events are also forwarded to real Mixpanel and Hotjar accounts so the integration can be verified outside the app.
 
 ### Looker-style executive reporting
 
@@ -56,7 +59,7 @@ The `/admin/analytics` page acts like a SaaS BI dashboard:
 
 These metrics are calculated in `lib/metrics.ts` from SQLite data created through Prisma.
 
-### Mixpanel-style funnel analytics
+### Mixpanel funnel analytics
 
 The app instruments an activation funnel:
 
@@ -64,9 +67,9 @@ The app instruments an activation funnel:
 signup_completed -> project_created -> task_created
 ```
 
-Events are recorded when a user registers, creates a project, and creates a task. The admin dashboard shows user counts, conversion percentages, and drop-off between each funnel step.
+Events are recorded when a user registers, creates a project, and creates a task. The admin dashboard shows user counts, conversion percentages, and drop-off between each funnel step. If `MIXPANEL_PROJECT_TOKEN` is configured, the same server-side events are also sent to Mixpanel with privacy-safe user IDs and plan metadata.
 
-### Hotjar-style pricing behavior analysis
+### Hotjar pricing behavior analysis
 
 The pricing page tracks behavioral signals similar to a lightweight heatmap/session analytics workflow:
 
@@ -74,7 +77,7 @@ The pricing page tracks behavioral signals similar to a lightweight heatmap/sess
 - `pricing_plan_focused`: Free or Premium plan card hovered/focused, including duration in milliseconds
 - `upgrade_clicked`: Premium CTA clicked
 
-The client-side tracker in `components/PricingTracker.tsx` sends pricing interactions to `/api/analytics`, and `/admin/analytics` summarizes attention time and clicks per plan.
+The client-side tracker in `components/PricingTracker.tsx` sends pricing interactions to `/api/analytics`, and `/admin/analytics` summarizes attention time and clicks per plan. If `NEXT_PUBLIC_HOTJAR_SITE_ID` is configured, the same pricing interactions are also sent to Hotjar through the browser SDK.
 
 ### Event tracking model
 
@@ -91,12 +94,65 @@ All product analytics events are stored in the `AnalyticsEvent` table:
 
 This keeps the MVP self-contained while demonstrating event instrumentation, funnel analysis, subscription metrics, and pricing-page behavior analysis.
 
+## Real Analytics Setup
+
+### Mixpanel
+
+1. Create a Mixpanel account and a new project.
+2. Open Project Settings and copy the Project Token.
+3. Add it to `.env`:
+
+```bash
+MIXPANEL_PROJECT_TOKEN="your-project-token"
+```
+
+4. Restart the app, register a new user, create a project, create a task, and upgrade/cancel Premium.
+5. Verify events such as `signup_completed`, `project_created`, `task_created`, `upgrade_clicked`, `premium_started`, and `subscription_canceled` in Mixpanel Events or Live View.
+
+### Hotjar
+
+1. Create a Hotjar account and add a site/property.
+2. Copy the Hotjar Site ID.
+3. Add it to `.env`:
+
+```bash
+NEXT_PUBLIC_HOTJAR_SITE_ID="123456"
+NEXT_PUBLIC_HOTJAR_VERSION="6"
+```
+
+4. Restart the app, open `/pricing`, hover or focus both plan cards, and click the Premium CTA.
+5. Verify Hotjar tracking status, events, and sessions. A deployed URL is more reliable than localhost for session recording evidence.
+
+If the new Contentsquare onboarding gives you a tag like this instead:
+
+```html
+<script src="https://t.contentsquare.net/uxa/your-tag-id.js" defer></script>
+```
+
+Add only the script URL to your environment:
+
+```bash
+NEXT_PUBLIC_CONTENTSQUARE_TAG_URL="https://t.contentsquare.net/uxa/your-tag-id.js"
+```
+
+After changing this value on Vercel, redeploy the production deployment so the browser tag is included in the live app.
+
+Do not commit real `.env` values. The repository includes `.env.example` only.
+
+## Verification
+
+```bash
+npm run test
+npm run typecheck
+npm run build
+```
+
 ## Resume Talking Points
 
 - Built a full-stack SaaS task management MVP with Next.js, TypeScript, Prisma, SQLite, and Tailwind CSS.
-- Implemented local product analytics instrumentation modeled after Mixpanel events and activation funnels.
+- Implemented local product analytics instrumentation with optional real Mixpanel event forwarding.
 - Built an admin BI dashboard modeled after Looker to report active users, MRR, churn, funnel conversion, and event streams.
-- Added Hotjar-style pricing behavior tracking for plan-card attention time and Premium CTA clicks.
+- Added Hotjar browser tracking for pricing-page attention signals and Premium CTA clicks.
 - Designed a mocked Premium subscription flow with project limits, upgrade/cancel events, and seeded demo data.
 
 ## Key Routes
@@ -119,4 +175,4 @@ Add screenshots after running locally:
 
 ## Notes
 
-This MVP intentionally mocks billing and external analytics tools. The goal is to demonstrate product thinking, SaaS mechanics, and event-driven reporting in a self-contained app that reviewers can run from GitHub.
+This MVP intentionally mocks billing and keeps the Looker-style BI dashboard local. Mixpanel and Hotjar are optional real integrations controlled by environment variables, so reviewers can run the app from GitHub without external accounts or verify live analytics when credentials are configured.

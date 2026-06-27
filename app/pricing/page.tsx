@@ -126,7 +126,7 @@ export default async function PricingPage({ searchParams }: PricingPageProps) {
                 </form>
               </>
             ) : (
-              <form action={upgradeToPremiumAction}>
+              <form action={upgradeToPremiumAction} data-hotjar-event="upgrade_clicked">
                 <SubmitButton
                   pendingLabel="Upgrading..."
                   className="w-full bg-emerald-600 text-white hover:bg-emerald-700"

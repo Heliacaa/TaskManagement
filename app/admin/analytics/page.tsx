@@ -1,6 +1,17 @@
-import { BarChart3, Flame, MousePointerClick, TrendingDown, Users } from "lucide-react";
+import {
+  BarChart3,
+  CheckCircle2,
+  CircleOff,
+  Flame,
+  MousePointerClick,
+  PlugZap,
+  TrendingDown,
+  Users
+} from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
+import { isHotjarConfigured } from "@/lib/hotjar";
 import { getAdminAnalytics } from "@/lib/metrics";
+import { isMixpanelConfigured } from "@/lib/mixpanel";
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -11,6 +22,18 @@ const currency = new Intl.NumberFormat("en-US", {
 export default async function AdminAnalyticsPage() {
   await requireAdmin();
   const analytics = await getAdminAnalytics();
+  const integrations = [
+    {
+      name: "Mixpanel",
+      configured: isMixpanelConfigured(),
+      detail: "Server-side product events"
+    },
+    {
+      name: "Hotjar",
+      configured: isHotjarConfigured(),
+      detail: "Pricing behavior signals"
+    }
+  ];
 
   return (
     <div className="space-y-8">
@@ -52,6 +75,39 @@ export default async function AdminAnalyticsPage() {
           value={analytics.pricing.views.toString()}
           detail="Tracked on pricing page load"
         />
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        {integrations.map((integration) => (
+          <div key={integration.name} className="panel p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow">Real integration</p>
+                <h2 className="mt-2 flex items-center gap-2 text-lg font-bold">
+                  <PlugZap size={18} aria-hidden="true" />
+                  {integration.name}
+                </h2>
+                <p className="mt-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                  {integration.detail}
+                </p>
+              </div>
+              <span
+                className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold ${
+                  integration.configured
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
+                    : "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"
+                }`}
+              >
+                {integration.configured ? (
+                  <CheckCircle2 size={16} aria-hidden="true" />
+                ) : (
+                  <CircleOff size={16} aria-hidden="true" />
+                )}
+                {integration.configured ? "Configured" : "Missing env"}
+              </span>
+            </div>
+          </div>
+        ))}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_0.9fr]">

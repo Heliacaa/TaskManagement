@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { trackHotjarEvent } from "@/lib/hotjar-client";
 
 function sendEvent(event: string, metadata: Record<string, unknown>) {
+  void trackHotjarEvent(event);
+
   const payload = JSON.stringify({ event, metadata });
 
   if (navigator.sendBeacon) {
@@ -66,6 +69,23 @@ export function PricingTracker() {
       };
     });
 
+    const eventTargets = Array.from(document.querySelectorAll("[data-hotjar-event]"));
+    const eventCleanups = eventTargets.map((target) => {
+      const onClick = () => {
+        const event = target.getAttribute("data-hotjar-event");
+
+        if (event) {
+          void trackHotjarEvent(event);
+        }
+      };
+
+      target.addEventListener("click", onClick);
+
+      return () => {
+        target.removeEventListener("click", onClick);
+      };
+    });
+
     const flush = () => {
       cards.forEach((card) => stop(card));
     };
@@ -75,6 +95,7 @@ export function PricingTracker() {
     return () => {
       flush();
       cleanups.forEach((cleanup) => cleanup());
+      eventCleanups.forEach((cleanup) => cleanup());
       window.removeEventListener("beforeunload", flush);
     };
   }, []);
